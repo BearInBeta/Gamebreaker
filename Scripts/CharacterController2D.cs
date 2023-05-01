@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -42,6 +43,11 @@ public class CharacterController2D : MonoBehaviour
 
 	private void FixedUpdate()
 	{
+		if (m_Grounded || m_Walled)
+		{
+			m_AirControl = true;
+
+		}
 		bool wasGrounded = m_Grounded;
 		m_Grounded = false;
 
@@ -64,7 +70,12 @@ public class CharacterController2D : MonoBehaviour
 			if (collidersLeft[i].gameObject != gameObject)
 			{
 				m_Walled = true;
-			
+                if (!m_FacingRight)
+                {
+					Flip();
+                }
+
+
 			}
 		}
 
@@ -75,8 +86,13 @@ public class CharacterController2D : MonoBehaviour
 			{
 				m_Walled = true;
 
+				if (m_FacingRight)
+				{
+					Flip();
+				}
 			}
 		}
+		
 	}
 
 
@@ -131,13 +147,13 @@ public class CharacterController2D : MonoBehaviour
 			m_Rigidbody2D.velocity = Vector3.SmoothDamp(m_Rigidbody2D.velocity, targetVelocity, ref m_Velocity, m_MovementSmoothing);
 
 			// If the input is moving the player right and the player is facing left...
-			if (move > 0 && !m_FacingRight)
+			if (move > 0 && !m_FacingRight && !m_Walled)
 			{
 				// ... flip the player.
 				Flip();
 			}
 			// Otherwise if the input is moving the player left and the player is facing right...
-			else if (move < 0 && m_FacingRight)
+			else if (move < 0 && m_FacingRight && !m_Walled)
 			{
 				// ... flip the player.
 				Flip();
@@ -149,8 +165,17 @@ public class CharacterController2D : MonoBehaviour
 			// Add a vertical force to the player.
 			m_Grounded = false;
 			m_Rigidbody2D.AddForce(new Vector2(0f, m_JumpForce));
+		}else if(m_Walled && jump)
+        {
+			m_AirControl = false;
+			int sign = -1;
+			if (!m_FacingRight)
+				sign = 1;
+			m_Rigidbody2D.AddForce(new Vector2(m_JumpForce * sign, m_JumpForce/2));
 		}
 	}
+
+	
 
 
 	private void Flip()
